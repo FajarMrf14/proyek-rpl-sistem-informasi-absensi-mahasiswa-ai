@@ -78,9 +78,12 @@ Menggunakan Google Gemini API dengan pendekatan Retrieval-Augmented Generation (
 
 | Tahapan | Link Video |
 |---|---|
-| Video Progres 1 – PRD/SRS | [MASUKKAN LINK YOUTUBE] |
-| Video Progres 2 – UML & UI/UX | [MASUKKAN LINK YOUTUBE] |
-| Video Final – Live Demo | [MASUKKAN LINK YOUTUBE] |
+| Video Final | https://youtu.be/KWRxGauew7s?si=iivwwF5g6t3gna8O |
+
+## Laporan-Laporan
+
+| Laporan PRD | https://drive.google.com/file/d/1iFn9c6WxjfsHY9OQ64N4Yc9YL1wSYIDD/view?usp=drive_link 
+| Laporan SDD | https://drive.google.com/file/d/1Tv90r8x8gpTjdCsp_PL9Okg4vt_PxD63/view?usp=sharing |
 
 ## Petunjuk Instalasi Aplikasi
 
