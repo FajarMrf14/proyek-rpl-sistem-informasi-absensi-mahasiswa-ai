@@ -1,0 +1,43 @@
+# Environment files & Secrets
+.env
+.env.*
+!.env.example
+
+# Vendor & Dependencies
+/vendor/
+
+# Uploaded User Files (keep directories with .gitkeep)
+/public/uploads/faces/*
+!/public/uploads/faces/.gitkeep
+/public/uploads/attendance/*
+!/public/uploads/attendance/.gitkeep
+/public/uploads/surat_izin/*
+!/public/uploads/surat_izin/.gitkeep
+/public/uploads/kegiatan/*
+!/public/uploads/kegiatan/.gitkeep
+/public/uploads/izin/*
+!/public/uploads/izin/.gitkeep
+/public/uploads/logo/*
+!/public/uploads/logo/.gitkeep
+
+# Logs & Temporary files
+*.log
+/logs/*
+!/logs/.gitkeep
+/storage/logs/*
+/storage/temp/*
+
+# Scratch & Debug files
+/scratch/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj

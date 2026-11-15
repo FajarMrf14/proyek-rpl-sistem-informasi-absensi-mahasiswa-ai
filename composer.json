@@ -1,0 +1,19 @@
+{
+    "name": "stmik-ikmi/absensi-mahasiswa",
+    "description": "Sistem Absensi Mahasiswa Berbasis Web dengan AI untuk STMIK IKMI Cirebon",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Helpers/ViewHelper.php",
+            "app/Helpers/AuthHelper.php",
+            "app/Helpers/GeoHelper.php"
+        ]
+    },
+    "require": {
+        "php": ">=8.0"
+    }
+}

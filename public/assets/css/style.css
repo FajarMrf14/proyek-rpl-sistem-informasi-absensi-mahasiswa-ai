@@ -1,0 +1,107 @@
+/* ==============================================================================
+   SISTEM ABSENSI MAHASISWA BERBASIS WEB DENGAN AI - STMIK IKMI CIREBON
+   Custom Stylesheet (Modern & Responsive UI)
+   ============================================================================== */
+
+:root {
+    --ikmi-primary: #1e3a8a;
+    --ikmi-primary-dark: #172554;
+    --ikmi-primary-light: #3b82f6;
+    --ikmi-accent: #f59e0b;
+    --ikmi-bg: #f8fafc;
+    --ikmi-card-bg: #ffffff;
+    --ikmi-text-main: #0f172a;
+    --ikmi-text-muted: #64748b;
+    --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-heading: 'Outfit', sans-serif;
+}
+
+body {
+    font-family: var(--font-family-base);
+    background-color: var(--ikmi-bg);
+    color: var(--ikmi-text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+    font-family: var(--font-family-heading);
+}
+
+.fs-7 { font-size: 0.875rem !important; }
+.fs-8 { font-size: 0.75rem !important; }
+.tracking-wide { letter-spacing: 0.05em; }
+
+.bg-primary-gradient {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.bg-white-20 {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.text-white-80 {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.brand-icon-box {
+    width: 38px;
+    height: 38px;
+}
+
+.avatar-box {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.step-circle {
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+}
+
+.feature-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Nav Pills Custom Active */
+.nav-pills .nav-link {
+    font-weight: 500;
+    color: var(--ikmi-text-muted);
+    transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f1f5f9;
+    color: var(--ikmi-primary);
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--ikmi-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.25);
+}
+
+.login-brand-icon {
+    width: 64px;
+    height: 64px;
+}
+
+.bg-gradient-radial {
+    background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .hero-illustration {
+        display: none;
+    }
+}

@@ -1,0 +1,19 @@
+# Keamanan direktori
+Options -Indexes
+
+# Tolak file tersembunyi dan file konfigurasi/data sensitif
+<FilesMatch "(^\.|\.(?:sql|bak|log|ini)$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Tolak akses langsung ke direktori internal dan file bootstrap/konfigurasi
+    RewriteRule ^(?:app|database|tests|storage|vendor)(?:/|$) - [NC,F,L]
+    RewriteRule ^(?:bootstrap\.php|composer\.(?:json|lock)|README\.md)(?:/.*)?$ - [NC,F,L]
+
+    # Entry point aplikasi
+    RewriteRule ^$ public/index.php [L]
+    RewriteRule ^public(?:/(.*))?$ public/index.php [L,QSA]
+</IfModule>
