@@ -126,7 +126,7 @@ INSERT INTO `izin_sakit` (`id`, `mahasiswa_id`, `jadwal_id`, `pertemuan_id`, `ti
 -- 14. Seeder Audit Log Aktivitas
 TRUNCATE TABLE `audit_logs`;
 INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `table_name`, `record_id`, `ip_address`, `user_agent`, `payload_before`, `payload_after`) VALUES
-(1, 1, 'SYSTEM_INIT_MIGRATION', 'settings_kampus', 1, '127.0.0.1', 'CLI-Migration-Runner', NULL, '{"status": "initialized", "tables_count": 14}'),
+(1, 1, 'SYSTEM_INIT_MIGRATION', 'settings_kampus', 1, '127.0.0.1', 'CLI-Migration-Runner', NULL, '{"status": "initialized", "tables_count": 14}');
 -- 15. Seeder Konfigurasi Aplikasi (app_settings)
 TRUNCATE TABLE `app_settings`;
 INSERT INTO `app_settings` (`setting_key`, `setting_value`, `setting_group`, `setting_type`, `is_encrypted`, `description`) VALUES
