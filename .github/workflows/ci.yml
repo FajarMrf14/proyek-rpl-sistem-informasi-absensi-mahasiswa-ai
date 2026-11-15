@@ -1,0 +1,185 @@
+name: CI - Sistem Informasi Absensi Mahasiswa AI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-lint:
+    name: Build, Lint & Automated Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: db_absensi_ikmi_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: db_absensi_ikmi_test
+      DB_USER: root
+      DB_PASS: root
+      APP_ENV: testing
+      APP_DEBUG: true
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
+      FONNTE_TOKEN: ${{ secrets.FONNTE_TOKEN || '' }}
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup PHP Environment (PHP 8.4)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_mysql, curl, gd, json, openssl
+          tools: composer:v2
+
+      - name: 3. Validasi Berkas composer.json
+        run: composer validate --strict
+
+      - name: 4. Install Dependensi Composer
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: 5. Pemeriksaan Sintaks PHP (PHP Syntax Linting)
+        run: |
+          echo "Memulai linting sintaks PHP pada root project (index.php, bootstrap.php), app/, public/, database/, dan tests/..."
+          ERRORS=0
+          TOTAL=0
+          while IFS= read -r -d '' file; do
+            TOTAL=$((TOTAL + 1))
+            OUTPUT=$(php -l "$file" 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "::error file=$file::Kesalahan sintaks pada $file"
+              echo "❌ Parse error in $file:"
+              echo "$OUTPUT"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find . -maxdepth 1 -name "*.php" -print0; find app public database tests -type f -name "*.php" -print0)
+
+          if [ $ERRORS -ne 0 ]; then
+            echo ""
+            echo "❌ PHP Syntax Lint GAGAL: Ditemukan $ERRORS dari $TOTAL file dengan kesalahan sintaks."
+            exit 1
+          fi
+          echo "✅ PHP Syntax Lint LULUS: Seluruh $TOTAL file PHP valid dan bebas dari kesalahan sintaks."
+
+      - name: 6. Konfigurasi Environment Pengujian (.env)
+        run: |
+          cp .env.example .env
+          sed -i 's/DB_NAME=db_absensi_ikmi/DB_NAME=db_absensi_ikmi_test/' .env
+          sed -i 's/DB_PASS=/DB_PASS=root/' .env
+          sed -i 's/APP_ENV=development/APP_ENV=testing/' .env
+          echo "File .env pengujian berhasil disiapkan dari template .env.example."
+
+      - name: 7. Inisialisasi Skema & Data Seeder Database Pengujian (db_absensi_ikmi_test)
+        run: |
+          echo "Memverifikasi kesiapan MySQL service..."
+          READY=0
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot --silent; then
+              echo "✅ MySQL siap melayani koneksi pada percobaan ke-$i."
+              READY=1
+              break
+            fi
+            echo "Menunggu MySQL siap ($i/30)..."
+            sleep 1
+          done
+
+          if [ "$READY" -ne 1 ]; then
+            echo "❌ FATAL: MySQL service belum siap setelah 30 detik (timeout). Menghentikan workflow."
+            exit 1
+          fi
+
+          echo "Mengimpor skema database ke db_absensi_ikmi_test..."
+          sed 's/db_absensi_ikmi/db_absensi_ikmi_test/g' database/schema.sql | mysql -h 127.0.0.1 -P 3306 -u root -proot db_absensi_ikmi_test
+          
+          echo "Mengimpor data awal master & dummy ke db_absensi_ikmi_test..."
+          sed 's/db_absensi_ikmi/db_absensi_ikmi_test/g' database/seeder.sql | mysql -h 127.0.0.1 -P 3306 -u root -proot db_absensi_ikmi_test
+          echo "✅ Database isolasi pengujian db_absensi_ikmi_test siap digunakan."
+
+      - name: 8. Eksekusi Suite Pengujian Otomatis (16 Suites)
+        run: |
+          FAILED=0
+          
+          # Daftar script pengujian terisolasi yang dapat dieksekusi otomatis di CI
+          # Catatan: tests/test_student_whatsapp_flow.php sengaja tidak dimasukkan ke CI
+          # karena merupakan skrip demo manual yang membutuhkan modifikasi nomor WhatsApp pribadi mahasiswa/admin.
+          TESTS=(
+            "tests/test_auth_rbac.php"
+            "tests/test_geolocation.php"
+            "tests/test_face_verification.php"
+            "tests/test_jadwal_absensi.php"
+            "tests/test_full_absensi_flow.php"
+            "tests/test_mahasiswa_dashboard.php"
+            "tests/test_konfigurasi.php"
+            "tests/test_login_user_management_chatbot.php"
+            "tests/test_chatbot.php"
+            "tests/test_current_chatbot.php"
+            "tests/test_gemini_and_data_audit.php"
+            "tests/test_prompt12_qa_validation.php"
+            "tests/test_whatsapp_notifications.php"
+            "tests/test_whatsapp_recipients.php"
+            "tests/test_whatsapp_simulation_flow.php"
+            "tests/test_chatbot_database.php"
+          )
+
+          echo "===================================================================="
+          echo "  MENJALANKAN AUTOMATED TEST SUITE (16 SUITES)"
+          echo "===================================================================="
+
+          for test_file in "${TESTS[@]}"; do
+            echo ""
+            echo "▶ Eksekusi: $test_file"
+            echo "--------------------------------------------------------------------"
+            
+            # Reset seluruh 17 tabel ke baseline sebelum setiap tes dieksekusi:
+            # 1. Bersihkan 2 tabel notifikasi WhatsApp
+            mysql -h 127.0.0.1 -P 3306 -u root -proot db_absensi_ikmi_test -e "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE whatsapp_notifications; TRUNCATE TABLE whatsapp_announcements; SET FOREIGN_KEY_CHECKS=1;"
+            # 2. Truncate dan seeder ulang 15 tabel master & transaksi via seeder.sql
+            sed 's/db_absensi_ikmi/db_absensi_ikmi_test/g' database/seeder.sql | mysql -h 127.0.0.1 -P 3306 -u root -proot db_absensi_ikmi_test
+            
+            # Eksekusi test runner dan tangkap status keluar serta string [FAIL]
+            if OUTPUT=$(php "$test_file" 2>&1); then
+              echo "$OUTPUT"
+              if echo "$OUTPUT" | grep -q "\[FAIL\]"; then
+                echo "❌ GAGAL: $test_file (Ditemukan asersi gagal [FAIL])"
+                FAILED=$((FAILED + 1))
+              else
+                echo "✅ LULUS: $test_file"
+              fi
+            else
+              EXIT_CODE=$?
+              echo "$OUTPUT"
+              echo "❌ GAGAL: $test_file (Proses keluar dengan status error code $EXIT_CODE)"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          echo ""
+          echo "===================================================================="
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ CI BUILD GAGAL: Ditemukan $FAILED suite pengujian yang bermasalah."
+            exit 1
+          else
+            echo "🎉 CI BUILD SUKSES: Seluruh 16 suite pengujian otomatis lulus 100%!"
+            exit 0
+          fi
