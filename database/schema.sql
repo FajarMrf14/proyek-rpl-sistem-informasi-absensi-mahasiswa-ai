@@ -17,6 +17,7 @@ CREATE TABLE `users` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL COMMENT 'NIM untuk Mahasiswa, NIDN untuk Dosen, Username untuk Admin',
     `email` VARCHAR(100) NULL,
+    `nama_lengkap` VARCHAR(100) NULL COMMENT 'Nama lengkap untuk Admin / Display Name',
     `password_hash` VARCHAR(255) NOT NULL COMMENT 'Bcrypt / Argon2 hashed password',
     `role` ENUM('admin', 'dosen', 'mahasiswa') NOT NULL DEFAULT 'mahasiswa',
     `avatar` VARCHAR(255) NULL,

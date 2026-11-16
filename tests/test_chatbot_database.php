@@ -142,12 +142,30 @@ $lateRows = $db->query(
 )->fetchAll(PDO::FETCH_ASSOC);
 $lateRow = $lateRows[0] ?? null;
 
+$stmtLateThisMonth = $db->prepare(
+    "SELECT a.id, a.status, a.waktu_absensi, a.mahasiswa_id, pk.tanggal, pk.pertemuan_ke,
+            jk.id AS jadwal_id, jk.dosen_id, m.nama_lengkap, m.nim, mk.nama_mk, k.nama_kelas
+     FROM absensi a
+     JOIN pertemuan_kuliah pk ON pk.id = a.pertemuan_id
+     JOIN jadwal_kuliah jk ON jk.id = pk.jadwal_id
+     JOIN mahasiswa m ON m.id = a.mahasiswa_id
+     JOIN mata_kuliah mk ON mk.id = jk.mata_kuliah_id
+     JOIN kelas k ON k.id = jk.kelas_id
+     WHERE a.status = 'terlambat'
+       AND pk.tanggal BETWEEN :start AND :end
+     ORDER BY a.waktu_absensi DESC, a.id DESC"
+);
+$stmtLateThisMonth->execute(['start' => $monthStart, 'end' => $monthEnd]);
+$lateRowsThisMonth = $stmtLateThisMonth->fetchAll(PDO::FETCH_ASSOC);
+$lateRowThisMonth = $lateRowsThisMonth[0] ?? null;
+
+$lateDosenRow = $lateRowThisMonth ?? $lateRow;
 $lateDosenUser = null;
 $otherDosenUser = null;
-if ($lateRow !== null) {
-    $lateDosenUser = dbFindUserForDosen($userModel, $lecturers, (int) $lateRow['dosen_id']);
+if ($lateDosenRow !== null) {
+    $lateDosenUser = dbFindUserForDosen($userModel, $lecturers, (int) $lateDosenRow['dosen_id']);
     foreach ($lecturers as $lecturer) {
-        if ((int) $lecturer['id'] !== (int) $lateRow['dosen_id']) {
+        if ((int) $lecturer['id'] !== (int) $lateDosenRow['dosen_id']) {
             $otherDosenUser = $userModel->getFullProfile((int) $lecturer['user_id']);
             break;
         }
@@ -546,12 +564,13 @@ if ($mahasiswaUsers !== []) {
 // -----------------------------------------------------------------------------
 echo "\n--- 3. ROLE SCOPING (ADMIN, DOSEN, MAHASISWA) ---\n";
 
-if ($lateRow !== null && $lateDosenUser !== null) {
+if ($lateDosenUser !== null) {
     $res = dbAsk($dbService, 'Siapa yang terlambat bulan ini?', $lateDosenUser);
+    $expectedLateReplyDosen = $lateRowThisMonth !== null ? (string) $lateRowThisMonth['nama_lengkap'] : 'Tidak ditemukan';
     assertDbCheck(
         'Dosen dapat melihat keterlambatan pada kelas yang diampu',
         dbSource($res) === 'app_database'
-        && str_contains(dbReply($res), (string) $lateRow['nama_lengkap'])
+        && str_contains(dbReply($res), $expectedLateReplyDosen)
     );
 
     if ($otherDosenUser !== null) {
@@ -559,15 +578,16 @@ if ($lateRow !== null && $lateDosenUser !== null) {
         assertDbCheck(
             'Dosen lain tidak melihat keterlambatan dari kelas dosen lain',
             dbSource($res) === 'app_database'
-            && !str_contains(dbReply($res), (string) $lateRow['nama_lengkap'])
+            && ($lateRowThisMonth === null || !str_contains(dbReply($res), (string) $lateRowThisMonth['nama_lengkap']))
         );
     }
 
-    $res = dbAsk($dbService, 'Tampilkan riwayat absensi ' . $lateRow['nama_lengkap'], $lateDosenUser);
+    $historyStudentName = (string) ($lateRowThisMonth['nama_lengkap'] ?? $lateRow['nama_lengkap'] ?? '');
+    $res = dbAsk($dbService, 'Tampilkan riwayat absensi ' . $historyStudentName, $lateDosenUser);
     assertDbCheck(
         'Dosen dapat melihat riwayat mahasiswa di kelasnya',
         dbSource($res) === 'app_database'
-        && str_contains(dbReply($res), (string) $lateRow['nama_lengkap'])
+        && str_contains(dbReply($res), $historyStudentName)
     );
 }
 
@@ -782,7 +802,7 @@ assertDbCheck(
 echo "\n--- 7. INTEGRASI SERVICE CHATBOT ---\n";
 
 $res = $chatService->sendMessage('Siapa yang terlambat bulan ini?', $adminUser, [], []);
-$expectedLateReply = $lateRow !== null ? (string) $lateRow['nama_lengkap'] : 'Tidak ditemukan';
+$expectedLateReply = $lateRowThisMonth !== null ? (string) $lateRowThisMonth['nama_lengkap'] : 'Tidak ditemukan';
 assertDbCheck(
     'Service chatbot memakai layer database sebelum fallback AI',
     ($res['source'] ?? '') === 'app_database'

@@ -116,13 +116,12 @@ jobs:
           sed 's/db_absensi_ikmi/db_absensi_ikmi_test/g' database/seeder.sql | mysql -h 127.0.0.1 -P 3306 -u root -proot db_absensi_ikmi_test
           echo "✅ Database isolasi pengujian db_absensi_ikmi_test siap digunakan."
 
-      - name: 8. Eksekusi Suite Pengujian Otomatis (16 Suites)
+      - name: 8. Eksekusi Suite Pengujian Otomatis (17 Suites)
         run: |
           FAILED=0
           
-          # Daftar script pengujian terisolasi yang dapat dieksekusi otomatis di CI
-          # Catatan: tests/test_student_whatsapp_flow.php sengaja tidak dimasukkan ke CI
-          # karena merupakan skrip demo manual yang membutuhkan modifikasi nomor WhatsApp pribadi mahasiswa/admin.
+          # Daftar script pengujian terisolasi yang dieksekusi otomatis di CI
+          # Catatan: Seluruh 17 suite pengujian dieksekusi menggunakan database isolasi dan mode simulasi/mock.
           TESTS=(
             "tests/test_auth_rbac.php"
             "tests/test_geolocation.php"
@@ -140,10 +139,11 @@ jobs:
             "tests/test_whatsapp_recipients.php"
             "tests/test_whatsapp_simulation_flow.php"
             "tests/test_chatbot_database.php"
+            "tests/test_student_whatsapp_flow.php"
           )
 
           echo "===================================================================="
-          echo "  MENJALANKAN AUTOMATED TEST SUITE (16 SUITES)"
+          echo "  MENJALANKAN AUTOMATED TEST SUITE (17 SUITES)"
           echo "===================================================================="
 
           for test_file in "${TESTS[@]}"; do
@@ -180,6 +180,6 @@ jobs:
             echo "❌ CI BUILD GAGAL: Ditemukan $FAILED suite pengujian yang bermasalah."
             exit 1
           else
-            echo "🎉 CI BUILD SUKSES: Seluruh 16 suite pengujian otomatis lulus 100%!"
+            echo "🎉 CI BUILD SUKSES: Seluruh 17 suite pengujian otomatis lulus 100%!"
             exit 0
           fi

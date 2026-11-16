@@ -368,6 +368,14 @@ class KonfigurasiController extends Controller
     {
         $userId = (int)(Session::get('user')['id'] ?? 1);
 
+        // Validasi Provider AI: Hanya google_gemini yang didukung.
+        $rawProvider = trim((string)$this->request->post('ai_provider', 'google_gemini'));
+        if ($rawProvider !== '' && $rawProvider !== 'google_gemini') {
+            Session::setFlash('error', 'Provider AI yang dipilih tidak didukung.');
+            $this->response->redirect(base_url('admin/konfigurasi?tab=chatbot'));
+            return;
+        }
+
         // Provider AI dikunci di backend. Admin hanya dapat mengubah model,
         // endpoint, dan API key; nilai dari request tidak pernah dipercaya.
         $provider = 'google_gemini';
@@ -451,6 +459,16 @@ class KonfigurasiController extends Controller
     public function testChatbotConnection(): void
     {
         $userId = (int)(Session::get('user')['id'] ?? 1);
+
+        // Validasi Provider AI: Hanya google_gemini yang didukung.
+        $rawProvider = trim((string)$this->request->post('ai_provider', 'google_gemini'));
+        if ($rawProvider !== '' && $rawProvider !== 'google_gemini') {
+            $this->response->json([
+                'success' => false,
+                'message' => 'Provider AI tidak didukung.'
+            ], 200);
+            return;
+        }
 
         // Provider dikunci; endpoint pengujian selalu memakai Google Gemini.
         $model = trim((string)$this->request->post('gemini_model', 'gemini-3.6-flash'));

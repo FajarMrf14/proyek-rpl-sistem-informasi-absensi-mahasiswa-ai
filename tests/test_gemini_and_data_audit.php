@@ -96,7 +96,7 @@ $resLowAdmin = $service->sendMessage('siapa mahasiswa dengan kehadiran sedikit',
 assertCheck(
     "Admin dapat menanyakan 'siapa mahasiswa dengan kehadiran sedikit'",
     $resLowAdmin['success'] === true
-    && (str_contains($resLowAdmin['reply'], 'Eggi Alivia Rohmaht') || str_contains($resLowAdmin['reply'], 'Galang Marcellino'))
+    && (str_contains($resLowAdmin['reply'], 'Putri Lestari') || str_contains($resLowAdmin['reply'], 'Muhammad Bintang'))
     && str_contains($resLowAdmin['reply'], '50.00%')
     && str_contains($resLowAdmin['reply'], 'UAS')
     && str_contains($resLowAdmin['reply'], 'Dasar Perhitungan Kehadiran')
@@ -148,8 +148,8 @@ $resDosenKelas = $service->sendMessage('siapa dosen yang mengajar kelas TI-2023-
 assertCheck(
     "Chatbot menjawab dosen pengampu kelas TI-2023-A dari database aktual",
     $resDosenKelas['success'] === true
-    && str_contains($resDosenKelas['reply'], 'Yudhistira Arie WIjaya')
-    && str_contains($resDosenKelas['reply'], 'Atep')
+    && str_contains($resDosenKelas['reply'], 'Ahmad Fauzi')
+    && str_contains($resDosenKelas['reply'], 'Siti Nurhaliza')
     && $resDosenKelas['source'] === 'app_database'
 );
 

@@ -1,4 +1,4 @@
-11<?php
+<?php
 
 require_once __DIR__ . '/_cli_guard.php';
 require_once dirname(__DIR__) . '/bootstrap.php';
@@ -108,40 +108,43 @@ try {
     $notifModel = new WhatsAppNotification();
 
     // -----------------------------------------------------------------
-    // 1. PENGUJIAN IDENTIFIKASI PENERIMA & NOMOR SAMA (EGGI VS ADMIN)
+    // 1. PENGUJIAN IDENTIFIKASI PENERIMA & NOMOR SAMA (DUMMY MHS VS ADMIN)
     // -----------------------------------------------------------------
-    echo "--- 1. IDENTIFIKASI AKUN & NOMOR SAMA (EGGI VS ADMIN) ---\n";
+    echo "--- 1. IDENTIFIKASI AKUN & NOMOR SAMA (DUMMY MHS VS ADMIN) ---\n";
     
-    // Pastikan Eggi (mahasiswa ID 3) dan Admin (user ID 1) ada dan no_hp terverifikasi
-    $eggiContact = $notifModel->getRecipientContact('mahasiswa', 3);
+    // Siapkan data kontak dummy terisolasi dalam transaksi pengujian
+    $db->exec("UPDATE users SET no_hp = '628111111111' WHERE id = 1");
+    $db->exec("UPDATE mahasiswa SET no_hp = '628111111111' WHERE id = 3");
+
+    $mhsContact = $notifModel->getRecipientContact('mahasiswa', 3);
     $adminContact = $notifModel->getRecipientContact('admin', 1);
 
-    checkTest('Data mahasiswa Eggi Alivia Rohmaht terdaftar dengan nomor WA aktif',
-        !empty($eggiContact['phone']) && $eggiContact['reason'] === null
+    checkTest('Data mahasiswa terdaftar dengan nomor WA aktif (dummy)',
+        !empty($mhsContact['phone']) && $mhsContact['reason'] === null
     );
-    checkTest('Data Admin terdaftar dengan nomor WA aktif',
+    checkTest('Data Admin terdaftar dengan nomor WA aktif (dummy)',
         !empty($adminContact['phone']) && $adminContact['reason'] === null
     );
 
-    // Verifikasi nomor Eggi dan nomor Admin sama untuk kebutuhan demo
-    $eggiPhoneNorm = FonnteService::normalizePhone((string) $eggiContact['phone']);
+    // Verifikasi nomor Mahasiswa dan nomor Admin sama untuk kebutuhan pengujian deduplikasi & separasi
+    $mhsPhoneNorm = FonnteService::normalizePhone((string) $mhsContact['phone']);
     $adminPhoneNorm = FonnteService::normalizePhone((string) $adminContact['phone']);
-    checkTest('Nomor WA Eggi dan Admin sama untuk kebutuhan demo',
-        $eggiPhoneNorm !== null && $eggiPhoneNorm === $adminPhoneNorm
+    checkTest('Nomor WA Mahasiswa dan Admin sama untuk kebutuhan pengujian',
+        $mhsPhoneNorm !== null && $mhsPhoneNorm === $adminPhoneNorm
     );
 
-    // Enqueue event untuk mahasiswa Eggi
-    $eggiPayload = ['mahasiswa_id' => 3, 'nama_mhs' => 'Eggi Alivia Rohmaht', 'keterangan' => 'Uji Mahasiswa'];
-    $enqueuedEggi = $service->enqueueForTest(
+    // Enqueue event untuk mahasiswa dummy
+    $mhsPayload = ['mahasiswa_id' => 3, 'nama_mhs' => 'Muhammad Bintang', 'keterangan' => 'Uji Mahasiswa'];
+    $enqueuedMhs = $service->enqueueForTest(
         'test_demo_flow:mhs:3',
         'attendance_confirmation',
         'mahasiswa',
         3,
         'mahasiswa#3',
-        $eggiPayload
+        $mhsPayload
     );
-    checkTest('Notifikasi untuk mahasiswa Eggi berhasil diantrekan secara spesifik (mahasiswa#3)',
-        $enqueuedEggi === true
+    checkTest('Notifikasi untuk mahasiswa berhasil diantrekan secara spesifik (mahasiswa#3)',
+        $enqueuedMhs === true
     );
 
     // Enqueue event untuk admin
@@ -159,11 +162,11 @@ try {
     );
 
     // Verifikasi kedua baris outbox tercatat terpisah berdasarkan akun & jenis penerima
-    $rowEggi = $query("SELECT * FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:mhs:3'")[0] ?? null;
+    $rowMhs = $query("SELECT * FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:mhs:3'")[0] ?? null;
     $rowAdmin = $query("SELECT * FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:admin:1'")[0] ?? null;
 
-    checkTest('Baris notifikasi Eggi memiliki recipient_type = mahasiswa dan recipient_id = 3',
-        $rowEggi !== null && $rowEggi['recipient_type'] === 'mahasiswa' && (int)$rowEggi['recipient_id'] === 3
+    checkTest('Baris notifikasi Mahasiswa memiliki recipient_type = mahasiswa dan recipient_id = 3',
+        $rowMhs !== null && $rowMhs['recipient_type'] === 'mahasiswa' && (int)$rowMhs['recipient_id'] === 3
     );
     checkTest('Baris notifikasi Admin memiliki recipient_type = admin dan recipient_id = 1',
         $rowAdmin !== null && $rowAdmin['recipient_type'] === 'admin' && (int)$rowAdmin['recipient_id'] === 1
@@ -175,10 +178,10 @@ try {
         $dispatchResult['processed'] >= 2 && $dispatchResult['failed'] === 0
     );
 
-    $rowEggiAfter = $query("SELECT status, simulated FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:mhs:3'")[0] ?? null;
+    $rowMhsAfter = $query("SELECT status, simulated FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:mhs:3'")[0] ?? null;
     $rowAdminAfter = $query("SELECT status, simulated FROM whatsapp_notifications WHERE event_key = 'test_demo_flow:admin:1'")[0] ?? null;
-    checkTest('Notifikasi Eggi accepted dengan penanda simulated = 1',
-        $rowEggiAfter !== null && $rowEggiAfter['status'] === 'accepted' && (int)$rowEggiAfter['simulated'] === 1
+    checkTest('Notifikasi Mahasiswa accepted dengan penanda simulated = 1',
+        $rowMhsAfter !== null && $rowMhsAfter['status'] === 'accepted' && (int)$rowMhsAfter['simulated'] === 1
     );
     checkTest('Notifikasi Admin accepted dengan penanda simulated = 1',
         $rowAdminAfter !== null && $rowAdminAfter['status'] === 'accepted' && (int)$rowAdminAfter['simulated'] === 1
@@ -234,7 +237,7 @@ try {
     $enqueuedConfirm = $service->enqueueAttendanceConfirmation($testAbsensiId, [
         'mahasiswa_id'  => 3,
         'jadwal_id'     => $testJadwalId,
-        'nama_mhs'      => 'Eggi Alivia Rohmaht',
+        'nama_mhs'      => 'Muhammad Bintang',
         'nim'           => '4122003',
         'nama_mk'       => 'Kecerdasan Buatan',
         'kode_mk'       => 'TIF-301',
@@ -376,7 +379,7 @@ try {
         $simDispatch['processed'] >= 4 && $simDispatch['failed'] === 0
     );
 
-    $maxBaselineId = max($baseline['outbox_ids']);
+    $maxBaselineId = !empty($baseline['outbox_ids']) ? max($baseline['outbox_ids']) : 0;
     $outboxRows = $query("SELECT * FROM whatsapp_notifications WHERE id > {$maxBaselineId}");
     $allSimulated = true;
     foreach ($outboxRows as $ob) {
@@ -402,7 +405,7 @@ try {
 echo "\n--- 5. VERIFIKASI PEMBERSIHAN DATA PASCA ROLLBACK ---\n";
 
 $finalOutboxCount = (int) $scalar("SELECT COUNT(*) FROM whatsapp_notifications");
-checkTest('Outbox historis tidak berubah (tetap 13 rekaman baseline)',
+checkTest('Outbox historis tidak berubah (tetap ' . $baseline['outbox_count'] . ' rekaman baseline)',
     $finalOutboxCount === $baseline['outbox_count']
 );
 

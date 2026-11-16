@@ -450,8 +450,12 @@ try {
 
     echo "\n--- 5. INTEGRITAS DATA OUTBOX HISTORIS (DALAM TRANSAKSI) ---\n";
 
-    $placeholders = implode(',', array_fill(0, count($baseline['outbox_ids']), '?'));
-    $historicalNow = $query("SELECT id, status, attempts, simulated, error_message FROM whatsapp_notifications WHERE id IN ({$placeholders}) ORDER BY id ASC", $baseline['outbox_ids']);
+    if (empty($baseline['outbox_ids'])) {
+        $historicalNow = [];
+    } else {
+        $placeholders = implode(',', array_fill(0, count($baseline['outbox_ids']), '?'));
+        $historicalNow = $query("SELECT id, status, attempts, simulated, error_message FROM whatsapp_notifications WHERE id IN ({$placeholders}) ORDER BY id ASC", $baseline['outbox_ids']);
+    }
     checkTest('Seluruh rekaman outbox historis (' . count($baseline['outbox_ids']) . ' baris) tidak tersentuh atau diubah selama pengujian berlangsung', $historicalNow === $historicalOutbox);
 
 } finally {

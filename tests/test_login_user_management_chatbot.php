@@ -289,7 +289,7 @@ assertTest(
 
 // 5.2 Pengujian penanganan error controller (tidak menghasilkan HTTP 500 mentah)
 $mockServiceFail = new class extends NvidiaChatbotService {
-    public function sendMessage(string $userMessage, array $currentUser, array $history = []): array {
+    public function sendMessage(string $userMessage, array $currentUser, array $history = [], array $context = []): array {
         return [
             'success' => false,
             'message' => 'Layanan AI sedang mengalami lonjakan beban. Silakan coba kembali dalam beberapa saat.'

@@ -581,6 +581,7 @@ class ChatbotDatabaseService
         // tidak salah masuk ke jadwal kuliah.
         if (preg_match('/\b(berapa|jumlah|total|banyak)\b/ui', $q)
             && preg_match('/\b(mahasiswa|dosen|admin|mata\s+kuliah|matkul|jadwal(?:\s+kelas)?|kelas|pertemuan|pengguna|user|keterlambatan|terlambat|telat|absensi)\b/ui', $q)
+            && !preg_match('/\b(hadir|kehadiran|alpha|alpa|izin|sakit)\b/ui', $q)
             && !preg_match('/\b(ranking|peringkat|top|paling|sering)\b/ui', $q)
         ) {
             return 'entity_count';
