@@ -151,6 +151,7 @@ INSERT INTO `app_settings` (`setting_key`, `setting_value`, `setting_group`, `se
 
 ('whatsapp_enabled', '0', 'whatsapp', 'boolean', 0, 'Status integrasi WhatsApp/Fonnte (1=Aktif, 0=Nonaktif)'),
 ('fonnte_token', '', 'whatsapp', 'string', 1, 'Token Fonnte (Terenkripsi, jangan pernah ditampilkan)'),
+('whatsapp_simulation_mode', '1', 'whatsapp', 'boolean', 0, 'Mode simulasi pengiriman WhatsApp (1=Simulasi, 0=Nyata)'),
 ('whatsapp_schedule_reminder_enabled', '0', 'whatsapp', 'boolean', 0, 'Kirim pengingat jadwal sebelum kelas'),
 ('whatsapp_attendance_confirmation_enabled', '0', 'whatsapp', 'boolean', 0, 'Kirim konfirmasi setelah absensi tercatat'),
 ('whatsapp_low_attendance_enabled', '0', 'whatsapp', 'boolean', 0, 'Kirim peringatan kehadiran rendah'),

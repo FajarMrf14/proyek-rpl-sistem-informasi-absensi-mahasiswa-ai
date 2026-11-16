@@ -33,6 +33,7 @@ class Database
                     $config['password'],
                     $config['options']
                 );
+                self::$instance->exec("SET time_zone = '+07:00'");
             } catch (PDOException $e) {
                 // Di mode production, jangan tampilkan detail error database ke publik
                 if (Env::get('APP_DEBUG', true)) {

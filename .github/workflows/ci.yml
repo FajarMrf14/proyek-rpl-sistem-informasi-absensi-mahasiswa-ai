@@ -26,6 +26,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
+          --default-time-zone="+07:00"
           --health-cmd="mysqladmin ping"
           --health-interval=10s
           --health-timeout=5s
@@ -88,6 +89,11 @@ jobs:
           sed -i 's/DB_NAME=db_absensi_ikmi/DB_NAME=db_absensi_ikmi_test/' .env
           sed -i 's/DB_PASS=/DB_PASS=root/' .env
           sed -i 's/APP_ENV=development/APP_ENV=testing/' .env
+          if [ -z "$GEMINI_API_KEY" ]; then
+            sed -i 's/GEMINI_API_KEY=/GEMINI_API_KEY=AQ.TestingDummyKey2026XYZ/' .env
+          else
+            sed -i "s/GEMINI_API_KEY=/GEMINI_API_KEY=$GEMINI_API_KEY/" .env
+          fi
           echo "File .env pengujian berhasil disiapkan dari template .env.example."
 
       - name: 7. Inisialisasi Skema & Data Seeder Database Pengujian (db_absensi_ikmi_test)

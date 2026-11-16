@@ -333,7 +333,12 @@ if ($origSecretRow !== null) {
 AppSetting::clearCache();
 
 // Test 3.2: Menyimpan tanpa mengubah API Key (kolom kosong) mempertahankan key lama
-$origKeyInEnv = \App\Core\Env::get('GEMINI_API_KEY', '');
+$origKeyInEnv = (string) \App\Core\Env::get('GEMINI_API_KEY', '');
+if ($origKeyInEnv === '') {
+    $origKeyInEnv = 'AQ.TestingDummyKey2026XYZ';
+    AppSetting::set('gemini_api_key', $origKeyInEnv, 'chatbot', true, 1);
+    AppSetting::clearCache();
+}
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_SERVER['REQUEST_URI'] = '/admin/konfigurasi/chatbot';
 $_POST = [
